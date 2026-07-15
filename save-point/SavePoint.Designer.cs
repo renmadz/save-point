@@ -147,6 +147,7 @@
             // 
             // number
             // 
+            number.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             number.HeaderText = "#";
             number.MinimumWidth = 6;
             number.Name = "number";
@@ -155,6 +156,7 @@
             // 
             // cover
             // 
+            cover.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             cover.HeaderText = "Cover Art";
             cover.ImageLayout = DataGridViewImageCellLayout.Zoom;
             cover.MinimumWidth = 6;
@@ -165,14 +167,15 @@
             // 
             // title
             // 
+            title.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             title.HeaderText = "Title";
             title.MinimumWidth = 6;
             title.Name = "title";
             title.ReadOnly = true;
-            title.Width = 315;
             // 
             // rating
             // 
+            rating.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             rating.HeaderText = "Rating";
             rating.MinimumWidth = 6;
             rating.Name = "rating";
@@ -181,6 +184,7 @@
             // 
             // platform
             // 
+            platform.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             platform.HeaderText = "Platform";
             platform.MinimumWidth = 6;
             platform.Name = "platform";
@@ -189,6 +193,7 @@
             // 
             // status
             // 
+            status.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             status.HeaderText = "Status";
             status.MinimumWidth = 6;
             status.Name = "status";
@@ -197,6 +202,7 @@
             // 
             // hours
             // 
+            hours.AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
             hours.HeaderText = "Hours Played";
             hours.MinimumWidth = 6;
             hours.Name = "hours";
@@ -205,11 +211,11 @@
             // 
             // remarks
             // 
+            remarks.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             remarks.HeaderText = "Remarks";
             remarks.MinimumWidth = 6;
             remarks.Name = "remarks";
             remarks.ReadOnly = true;
-            remarks.Width = 195;
             // 
             // SavePoint
             // 

@@ -44,9 +44,13 @@
             pnlBottom = new Panel();
             btnCancel = new Button();
             btnSave = new Button();
+            picCover = new PictureBox();
+            btnChangeCover = new Button();
+            btnRemoveCover = new Button();
             pnlTop.SuspendLayout();
             pnlContent.SuspendLayout();
             pnlBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)picCover).BeginInit();
             SuspendLayout();
             // 
             // pnlTop
@@ -70,6 +74,9 @@
             // 
             // pnlContent
             // 
+            pnlContent.Controls.Add(picCover);
+            pnlContent.Controls.Add(btnChangeCover);
+            pnlContent.Controls.Add(btnRemoveCover);
             pnlContent.Controls.Add(btnRemovePlatform);
             pnlContent.Controls.Add(btnEditPlatform);
             pnlContent.Controls.Add(btnAddPlatform);
@@ -159,9 +166,37 @@
             lblTitle.Size = new Size(38, 20);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Title";
-            // 
+            //
+            // picCover
+            //
+            picCover.BorderStyle = BorderStyle.FixedSingle;
+            picCover.Location = new Point(536, 42);
+            picCover.Name = "picCover";
+            picCover.Size = new Size(140, 187);
+            picCover.SizeMode = PictureBoxSizeMode.Zoom;
+            picCover.TabIndex = 7;
+            picCover.TabStop = false;
+            //
+            // btnChangeCover
+            //
+            btnChangeCover.Location = new Point(536, 235);
+            btnChangeCover.Name = "btnChangeCover";
+            btnChangeCover.Size = new Size(140, 30);
+            btnChangeCover.TabIndex = 8;
+            btnChangeCover.Text = "Change Cover...";
+            btnChangeCover.UseVisualStyleBackColor = true;
+            //
+            // btnRemoveCover
+            //
+            btnRemoveCover.Location = new Point(536, 271);
+            btnRemoveCover.Name = "btnRemoveCover";
+            btnRemoveCover.Size = new Size(140, 30);
+            btnRemoveCover.TabIndex = 9;
+            btnRemoveCover.Text = "Remove Cover";
+            btnRemoveCover.UseVisualStyleBackColor = true;
+            //
             // pnlBottom
-            // 
+            //
             pnlBottom.Controls.Add(btnCancel);
             pnlBottom.Controls.Add(btnSave);
             pnlBottom.Dock = DockStyle.Bottom;
@@ -172,7 +207,7 @@
             // 
             // btnCancel
             // 
-            btnCancel.Location = new Point(412, 19);
+            btnCancel.Location = new Point(568, 19);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(100, 30);
             btnCancel.TabIndex = 1;
@@ -181,7 +216,7 @@
             // 
             // btnSave
             // 
-            btnSave.Location = new Point(302, 19);
+            btnSave.Location = new Point(458, 19);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(100, 30);
             btnSave.TabIndex = 0;
@@ -192,7 +227,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(532, 453);
+            ClientSize = new Size(688, 453);
             Controls.Add(pnlContent);
             Controls.Add(pnlBottom);
             Controls.Add(pnlTop);
@@ -202,6 +237,7 @@
             Name = "AddEditGameForm";
             StartPosition = FormStartPosition.CenterParent;
             Text = "Add Game";
+            ((System.ComponentModel.ISupportInitialize)picCover).EndInit();
             pnlTop.ResumeLayout(false);
             pnlTop.PerformLayout();
             pnlContent.ResumeLayout(false);
@@ -228,5 +264,8 @@
         private ColumnHeader rating;
         private Button btnCancel;
         private Button btnSave;
+        private PictureBox picCover;
+        private Button btnChangeCover;
+        private Button btnRemoveCover;
     }
 }

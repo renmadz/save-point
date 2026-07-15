@@ -27,14 +27,13 @@ namespace save_point
         };
 
         private readonly GameService gameService = new();
+        private readonly CoverArtService coverArtService = new();
         private List<Game> allGames = new();
 
         public SavePoint()
         {
             InitializeComponent();
 
-            // Empty cover cells would otherwise render the broken-image icon.
-            cover.DefaultCellStyle.NullValue = null;
             tslStatus.Text = "";
 
             cmbFilter.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -75,6 +74,12 @@ namespace save_point
             try
             {
                 allGames = await gameService.GetAllGamesAsync();
+
+                // Decode all covers off the UI thread into the service's
+                // cache so ApplyView can render synchronously without IO.
+                await Task.WhenAll(
+                    allGames.Select(g => coverArtService.GetImageAsync(g.CoverArtPath)));
+
                 ApplyView();
             }
             catch (Exception ex)
@@ -125,8 +130,8 @@ namespace save_point
 
                 int rowIndex = dgvGames.Rows.Add(
                     number++,
-                    // Null is a valid cell value; the column's NullValue renders it blank.
-                    (object?)LoadCover(game.CoverArtPath)!,
+                    coverArtService.GetCachedImage(game.CoverArtPath)
+                        ?? CoverArtService.PlaceholderImage,
                     game.Title,
                     bestRating?.ToString("0.#") ?? "",
                     string.Join(", ", entries.Select(pe => pe.Platform)),
@@ -182,24 +187,6 @@ namespace save_point
             game.PlatformEntries
                 .Where(pe => pe.CompletionDate is not null)
                 .Max(pe => pe.CompletionDate);
-
-        private static Image? LoadCover(string? path)
-        {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-            {
-                return null;
-            }
-
-            try
-            {
-                // Read into memory so the file is not kept locked.
-                return Image.FromStream(new MemoryStream(File.ReadAllBytes(path)));
-            }
-            catch
-            {
-                return null;
-            }
-        }
 
         private async void BtnAdd_Click(object? sender, EventArgs e)
         {
