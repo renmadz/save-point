@@ -34,6 +34,9 @@ namespace save_point
         {
             InitializeComponent();
 
+            RestoreWindowPlacement();
+            FormClosing += SavePoint_FormClosing;
+
             tslStatus.Text = "";
 
             cmbFilter.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -60,6 +63,59 @@ namespace save_point
         private async void SavePoint_Load(object? sender, EventArgs e)
         {
             await LoadGamesAsync();
+        }
+
+        /// <summary>
+        /// Applies the saved window placement. When nothing was saved, or
+        /// the saved rectangle no longer touches any screen (for example
+        /// after disconnecting a monitor), the designer's default of
+        /// centering on the primary display is left in effect.
+        /// </summary>
+        private void RestoreWindowPlacement()
+        {
+            var s = WindowSettings.Default;
+            var saved = new Rectangle(s.WindowX, s.WindowY, s.WindowWidth, s.WindowHeight);
+
+            bool valid = saved.Width > 0 && saved.Height > 0 &&
+                Screen.AllScreens.Any(screen => screen.WorkingArea.IntersectsWith(saved));
+            if (!valid)
+            {
+                return;
+            }
+
+            StartPosition = FormStartPosition.Manual;
+            Bounds = saved;
+            if (s.WindowMaximized)
+            {
+                // Bounds set first so un-maximizing returns to the saved
+                // rectangle via RestoreBounds.
+                WindowState = FormWindowState.Maximized;
+            }
+        }
+
+        /// <summary>
+        /// Saves the window placement on normal close. Maximized and
+        /// minimized windows save their restore rectangle instead, so the
+        /// app never restores into a minimized state.
+        /// </summary>
+        private void SavePoint_FormClosing(object? sender, FormClosingEventArgs e)
+        {
+            try
+            {
+                var s = WindowSettings.Default;
+                var bounds = WindowState == FormWindowState.Normal ? Bounds : RestoreBounds;
+
+                s.WindowX = bounds.X;
+                s.WindowY = bounds.Y;
+                s.WindowWidth = bounds.Width;
+                s.WindowHeight = bounds.Height;
+                s.WindowMaximized = WindowState == FormWindowState.Maximized;
+                s.Save();
+            }
+            catch
+            {
+                // Failing to persist placement must never block closing.
+            }
         }
 
         /// <summary>
