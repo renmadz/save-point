@@ -30,6 +30,11 @@ namespace save_point
         private readonly CoverArtService coverArtService = new();
         private List<Game> allGames = new();
 
+        private readonly ContextMenuStrip gridMenu = new();
+        private readonly ToolStripMenuItem miEdit = new("Edit");
+        private readonly ToolStripMenuItem miDelete = new("Delete");
+        private readonly ToolStripMenuItem miCopyTitle = new("Copy Title");
+
         public SavePoint()
         {
             InitializeComponent();
@@ -51,10 +56,22 @@ namespace save_point
             cmbSort.Items.AddRange(SortOptions);
             cmbSort.SelectedIndex = 0;
 
+            gridMenu.Items.AddRange(new ToolStripItem[]
+            {
+                miEdit, miDelete, new ToolStripSeparator(), miCopyTitle
+            });
+            gridMenu.Opening += GridMenu_Opening;
+            miEdit.Click += MiEdit_Click;
+            miDelete.Click += MiDelete_Click;
+            miCopyTitle.Click += MiCopyTitle_Click;
+            dgvGames.ContextMenuStrip = gridMenu;
+
             Load += SavePoint_Load;
             btnAdd.Click += BtnAdd_Click;
             dgvGames.CellDoubleClick += DgvGames_CellDoubleClick;
             dgvGames.KeyDown += DgvGames_KeyDown;
+            dgvGames.CellMouseDown += DgvGames_CellMouseDown;
+            txtSearch.Enter += TxtSearch_Enter;
             txtSearch.TextChanged += ViewOption_Changed;
             cmbFilter.SelectedIndexChanged += ViewOption_Changed;
             cmbSort.SelectedIndexChanged += ViewOption_Changed;
@@ -150,6 +167,18 @@ namespace save_point
                         _ = EditGameAsync(game);
                     }
                     return true;
+
+                case Keys.Escape when txtSearch.Focused:
+                    if (txtSearch.TextLength > 0)
+                    {
+                        // TextChanged re-renders the grid; focus stays here.
+                        txtSearch.Clear();
+                    }
+                    else
+                    {
+                        dgvGames.Focus();
+                    }
+                    return true;
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
@@ -163,6 +192,83 @@ namespace save_point
             {
                 await LoadGamesAsync();
             }
+        }
+
+        /// <summary>Deletes a game after confirmation, then reloads.</summary>
+        private async Task DeleteGameAsync(Game game)
+        {
+            var confirm = MessageBox.Show(
+                $"Delete \"{game.Title}\" and all of its platform entries?",
+                "Save Point",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (confirm != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                await gameService.DeleteGameAsync(game.Id);
+                await LoadGamesAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to delete the game:\n\n{ex.Message}",
+                    "Save Point",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private Game? SelectedGame => dgvGames.CurrentRow?.Tag as Game;
+
+        private void GridMenu_Opening(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            bool hasSelection = SelectedGame is not null;
+            miEdit.Enabled = hasSelection;
+            miDelete.Enabled = hasSelection;
+            miCopyTitle.Enabled = hasSelection;
+        }
+
+        private async void MiEdit_Click(object? sender, EventArgs e)
+        {
+            if (SelectedGame is Game game)
+            {
+                await EditGameAsync(game);
+            }
+        }
+
+        private async void MiDelete_Click(object? sender, EventArgs e)
+        {
+            if (SelectedGame is Game game)
+            {
+                await DeleteGameAsync(game);
+            }
+        }
+
+        private void MiCopyTitle_Click(object? sender, EventArgs e)
+        {
+            if (SelectedGame is Game game)
+            {
+                Clipboard.SetText(game.Title);
+            }
+        }
+
+        /// <summary>Right-click selects the row so the menu acts on it.</summary>
+        private void DgvGames_CellMouseDown(object? sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right && e.RowIndex >= 0)
+            {
+                dgvGames.CurrentCell = dgvGames.Rows[e.RowIndex].Cells[e.ColumnIndex >= 0 ? e.ColumnIndex : 0];
+            }
+        }
+
+        private void TxtSearch_Enter(object? sender, EventArgs e)
+        {
+            // Deferred so a focusing mouse click cannot undo the selection.
+            BeginInvoke(txtSearch.SelectAll);
         }
 
         private void ViewOption_Changed(object? sender, EventArgs e)
@@ -312,38 +418,13 @@ namespace save_point
 
         private async void DgvGames_KeyDown(object? sender, KeyEventArgs e)
         {
-            if (e.KeyCode != Keys.Delete ||
-                dgvGames.CurrentRow is null ||
-                dgvGames.CurrentRow.Tag is not Game game)
+            if (e.KeyCode != Keys.Delete || SelectedGame is not Game game)
             {
                 return;
             }
 
             e.Handled = true;
-
-            var confirm = MessageBox.Show(
-                $"Delete \"{game.Title}\" and all of its platform entries?",
-                "Save Point",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
-            if (confirm != DialogResult.Yes)
-            {
-                return;
-            }
-
-            try
-            {
-                await gameService.DeleteGameAsync(game.Id);
-                await LoadGamesAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Failed to delete the game:\n\n{ex.Message}",
-                    "Save Point",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
+            await DeleteGameAsync(game);
         }
     }
 }

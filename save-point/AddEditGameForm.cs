@@ -21,6 +21,11 @@ namespace save_point
         private readonly List<int> removedEntryIds = new();
         private readonly ContextMenuStrip changeCoverMenu = new();
 
+        private static readonly string[] CoverExtensions =
+        {
+            ".png", ".jpg", ".jpeg", ".webp", ".bmp"
+        };
+
         private string? coverArtPath;
 
         /// <summary>
@@ -50,6 +55,9 @@ namespace save_point
             btnRemovePlatform.Click += BtnRemovePlatform_Click;
             btnChangeCover.Click += BtnChangeCover_Click;
             btnRemoveCover.Click += BtnRemoveCover_Click;
+            picCover.AllowDrop = true;
+            picCover.DragEnter += PicCover_DragEnter;
+            picCover.DragDrop += PicCover_DragDrop;
             btnSave.Click += BtnSave_Click;
             Load += AddEditGameForm_Load;
 
@@ -76,6 +84,43 @@ namespace save_point
         {
             var image = await coverArtService.GetImageAsync(coverArtPath);
             picCover.Image = image ?? CoverArtService.PlaceholderImage;
+        }
+
+        /// <summary>
+        /// The single dropped image file, or null when the drag data is
+        /// anything else (multiple files, non-file data, wrong extension).
+        /// </summary>
+        private static string? GetDroppedImagePath(DragEventArgs e)
+        {
+            if (e.Data?.GetData(DataFormats.FileDrop) is not string[] files ||
+                files.Length != 1)
+            {
+                return null;
+            }
+
+            string path = files[0];
+            return CoverExtensions.Contains(
+                Path.GetExtension(path), StringComparer.OrdinalIgnoreCase)
+                ? path
+                : null;
+        }
+
+        private void PicCover_DragEnter(object? sender, DragEventArgs e)
+        {
+            e.Effect = GetDroppedImagePath(e) is not null
+                ? DragDropEffects.Copy
+                : DragDropEffects.None;
+        }
+
+        private async void PicCover_DragDrop(object? sender, DragEventArgs e)
+        {
+            if (GetDroppedImagePath(e) is not string path)
+            {
+                return;
+            }
+
+            // Same pipeline as Change Cover -> From File.
+            await SetCoverAsync(() => coverArtService.SaveFromFileAsync(path));
         }
 
         private void BtnChangeCover_Click(object? sender, EventArgs e)
