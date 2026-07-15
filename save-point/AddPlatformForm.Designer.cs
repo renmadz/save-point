@@ -35,7 +35,6 @@
             btnCancel = new Button();
             btnSave = new Button();
             pnlContent = new Panel();
-            chkCompleted = new CheckBox();
             txtRemarks = new TextBox();
             dtpCompletionDate = new DateTimePicker();
             nudHoursPlayed = new NumericUpDown();
@@ -105,7 +104,6 @@
             // 
             // pnlContent
             // 
-            pnlContent.Controls.Add(chkCompleted);
             pnlContent.Controls.Add(txtRemarks);
             pnlContent.Controls.Add(dtpCompletionDate);
             pnlContent.Controls.Add(nudHoursPlayed);
@@ -123,17 +121,7 @@
             pnlContent.Name = "pnlContent";
             pnlContent.Size = new Size(332, 433);
             pnlContent.TabIndex = 2;
-            // 
-            // chkCompleted
-            // 
-            chkCompleted.AutoSize = true;
-            chkCompleted.Location = new Point(12, 114);
-            chkCompleted.Name = "chkCompleted";
-            chkCompleted.Size = new Size(105, 24);
-            chkCompleted.TabIndex = 11;
-            chkCompleted.Text = "Completed";
-            chkCompleted.UseVisualStyleBackColor = true;
-            // 
+            //
             // txtRemarks
             // 
             txtRemarks.AcceptsReturn = true;
@@ -291,7 +279,6 @@
         private NumericUpDown nudHoursPlayed;
         private Button btnCancel;
         private Button btnSave;
-        private CheckBox chkCompleted;
         private ContextMenuStrip contextMenuStrip1;
     }
 }

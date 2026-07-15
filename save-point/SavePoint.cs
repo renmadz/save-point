@@ -7,10 +7,27 @@ namespace save_point
     /// Main window. Shows one grid row per game, aggregating its platform
     /// entries, and opens <see cref="AddEditGameForm"/> for add/edit.
     /// Delete key removes the selected game after confirmation.
+    /// Games are loaded once into memory; search, filter and sort work on
+    /// the in-memory list without touching the database.
     /// </summary>
     public partial class SavePoint : Form
     {
+        private const string FilterAll = "All";
+
+        private static readonly string[] SortOptions =
+        {
+            "Title (A-Z)",
+            "Title (Z-A)",
+            "Rating (High-Low)",
+            "Rating (Low-High)",
+            "Hours Played (High-Low)",
+            "Hours Played (Low-High)",
+            "Recently Completed",
+            "Oldest Completed"
+        };
+
         private readonly GameService gameService = new();
+        private List<Game> allGames = new();
 
         public SavePoint()
         {
@@ -20,10 +37,25 @@ namespace save_point
             cover.DefaultCellStyle.NullValue = null;
             tslStatus.Text = "";
 
+            cmbFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbFilter.Items.Add(FilterAll);
+            foreach (var status in Enum.GetValues<GameStatus>())
+            {
+                cmbFilter.Items.Add(status);
+            }
+            cmbFilter.SelectedIndex = 0;
+
+            cmbSort.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbSort.Items.AddRange(SortOptions);
+            cmbSort.SelectedIndex = 0;
+
             Load += SavePoint_Load;
             btnAdd.Click += BtnAdd_Click;
             dgvGames.CellDoubleClick += DgvGames_CellDoubleClick;
             dgvGames.KeyDown += DgvGames_KeyDown;
+            txtSearch.TextChanged += ViewOption_Changed;
+            cmbFilter.SelectedIndexChanged += ViewOption_Changed;
+            cmbSort.SelectedIndexChanged += ViewOption_Changed;
         }
 
         private async void SavePoint_Load(object? sender, EventArgs e)
@@ -31,39 +63,19 @@ namespace save_point
             await LoadGamesAsync();
         }
 
-        /// <summary>Reloads all games from the database into the grid.</summary>
+        private void ViewOption_Changed(object? sender, EventArgs e)
+        {
+            ApplyView();
+        }
+
+        /// <summary>Reloads all games from the database, then re-renders.</summary>
         private async Task LoadGamesAsync()
         {
             tslStatus.Text = "Loading…";
             try
             {
-                var games = await gameService.GetAllGamesAsync();
-
-                dgvGames.Rows.Clear();
-                int number = 1;
-                foreach (var game in games)
-                {
-                    var entries = game.PlatformEntries;
-                    var first = entries.FirstOrDefault();
-                    double? bestRating = entries
-                        .Where(pe => pe.Rating is not null)
-                        .Max(pe => pe.Rating);
-                    int totalHours = entries.Sum(pe => pe.HoursPlayed ?? 0);
-
-                    int rowIndex = dgvGames.Rows.Add(
-                        number++,
-                        // Null is a valid cell value; the column's NullValue renders it blank.
-                        (object?)LoadCover(game.CoverArtPath)!,
-                        game.Title,
-                        bestRating?.ToString("0.#") ?? "",
-                        string.Join(", ", entries.Select(pe => pe.Platform)),
-                        first?.Status.ToString() ?? "",
-                        totalHours > 0 ? totalHours.ToString() : "",
-                        first?.Remarks ?? "");
-                    dgvGames.Rows[rowIndex].Tag = game;
-                }
-
-                tslStatus.Text = $"{games.Count} game{(games.Count == 1 ? "" : "s")}";
+                allGames = await gameService.GetAllGamesAsync();
+                ApplyView();
             }
             catch (Exception ex)
             {
@@ -75,6 +87,101 @@ namespace save_point
                     MessageBoxIcon.Error);
             }
         }
+
+        /// <summary>
+        /// Renders the grid from the in-memory list using the current
+        /// search text, status filter and sort order. No database access.
+        /// </summary>
+        private void ApplyView()
+        {
+            IEnumerable<Game> view = allGames;
+
+            string search = txtSearch.Text.Trim();
+            if (search.Length > 0)
+            {
+                view = view.Where(g =>
+                    g.Title.Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (cmbFilter.SelectedItem is GameStatus filterStatus)
+            {
+                view = view.Where(g =>
+                    g.PlatformEntries.Any(pe => pe.Status == filterStatus));
+            }
+
+            view = ApplySort(view, cmbSort.SelectedIndex);
+
+            var games = view.ToList();
+
+            dgvGames.SuspendLayout();
+            dgvGames.Rows.Clear();
+            int number = 1;
+            foreach (var game in games)
+            {
+                var entries = game.PlatformEntries;
+                var first = entries.FirstOrDefault();
+                double? bestRating = BestRating(game);
+                int? totalHours = TotalHours(game);
+
+                int rowIndex = dgvGames.Rows.Add(
+                    number++,
+                    // Null is a valid cell value; the column's NullValue renders it blank.
+                    (object?)LoadCover(game.CoverArtPath)!,
+                    game.Title,
+                    bestRating?.ToString("0.#") ?? "",
+                    string.Join(", ", entries.Select(pe => pe.Platform)),
+                    first?.Status.ToString() ?? "",
+                    totalHours?.ToString() ?? "",
+                    first?.Remarks ?? "");
+                dgvGames.Rows[rowIndex].Tag = game;
+            }
+            dgvGames.ResumeLayout();
+
+            tslStatus.Text = games.Count == allGames.Count
+                ? $"{games.Count} game{(games.Count == 1 ? "" : "s")}"
+                : $"{games.Count} of {allGames.Count} games";
+        }
+
+        private static IEnumerable<Game> ApplySort(IEnumerable<Game> view, int sortIndex)
+        {
+            // Games without a value for the chosen key always sort last.
+            return sortIndex switch
+            {
+                0 => view.OrderBy(g => g.Title, StringComparer.OrdinalIgnoreCase),
+                1 => view.OrderByDescending(g => g.Title, StringComparer.OrdinalIgnoreCase),
+                2 => view.OrderBy(g => BestRating(g) is null)
+                         .ThenByDescending(BestRating),
+                3 => view.OrderBy(g => BestRating(g) is null)
+                         .ThenBy(BestRating),
+                4 => view.OrderBy(g => TotalHours(g) is null)
+                         .ThenByDescending(TotalHours),
+                5 => view.OrderBy(g => TotalHours(g) is null)
+                         .ThenBy(TotalHours),
+                6 => view.OrderBy(g => LatestCompletion(g) is null)
+                         .ThenByDescending(LatestCompletion),
+                7 => view.OrderBy(g => LatestCompletion(g) is null)
+                         .ThenBy(LatestCompletion),
+                _ => view
+            };
+        }
+
+        /// <summary>Highest rating across the game's entries, or null.</summary>
+        private static double? BestRating(Game game) =>
+            game.PlatformEntries
+                .Where(pe => pe.Rating is not null)
+                .Max(pe => pe.Rating);
+
+        /// <summary>Total tracked hours across entries, or null when none tracked.</summary>
+        private static int? TotalHours(Game game) =>
+            game.PlatformEntries.Any(pe => pe.HoursPlayed is not null)
+                ? game.PlatformEntries.Sum(pe => pe.HoursPlayed ?? 0)
+                : null;
+
+        /// <summary>Most recent completion date across entries, or null.</summary>
+        private static DateTime? LatestCompletion(Game game) =>
+            game.PlatformEntries
+                .Where(pe => pe.CompletionDate is not null)
+                .Max(pe => pe.CompletionDate);
 
         private static Image? LoadCover(string? path)
         {

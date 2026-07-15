@@ -5,6 +5,8 @@ namespace save_point
     /// <summary>
     /// Dialog for creating or editing a single <see cref="PlatformEntry"/>.
     /// Works entirely in memory; the caller decides when to persist.
+    /// Completion is derived from the status: the completion date is only
+    /// enabled and saved when the status is Completed.
     /// </summary>
     public partial class AddPlatformForm : Form
     {
@@ -36,27 +38,23 @@ namespace save_point
             btnCancel.DialogResult = DialogResult.Cancel;
             CancelButton = btnCancel;
 
-            chkCompleted.CheckedChanged += ChkCompleted_CheckedChanged;
+            cmbStatus.SelectedIndexChanged += CmbStatus_SelectedIndexChanged;
             btnSave.Click += BtnSave_Click;
 
-            if (existing is null)
-            {
-                dtpCompletionDate.Enabled = false;
-            }
-            else
+            if (existing is not null)
             {
                 Text = "Edit Platform";
                 lblHeading.Text = "Edit Platform";
                 PopulateFrom(existing);
             }
+
+            UpdateCompletionDateState();
         }
 
         private void PopulateFrom(PlatformEntry entry)
         {
             cmbPlatform.Text = entry.Platform;
             cmbStatus.SelectedItem = entry.Status;
-            chkCompleted.Checked = entry.Completed;
-            dtpCompletionDate.Enabled = entry.Completed;
             if (entry.CompletionDate is not null)
             {
                 dtpCompletionDate.Value = entry.CompletionDate.Value;
@@ -66,9 +64,17 @@ namespace save_point
             txtRemarks.Text = entry.Remarks;
         }
 
-        private void ChkCompleted_CheckedChanged(object? sender, EventArgs e)
+        private bool IsCompletedSelected =>
+            cmbStatus.SelectedItem is GameStatus.Completed;
+
+        private void UpdateCompletionDateState()
         {
-            dtpCompletionDate.Enabled = chkCompleted.Checked;
+            dtpCompletionDate.Enabled = IsCompletedSelected;
+        }
+
+        private void CmbStatus_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            UpdateCompletionDateState();
         }
 
         private void BtnSave_Click(object? sender, EventArgs e)
@@ -94,14 +100,16 @@ namespace save_point
                 return;
             }
 
+            bool completed = status == GameStatus.Completed;
+
             Entry = new PlatformEntry
             {
                 Id = existing?.Id ?? 0,
                 GameId = existing?.GameId ?? 0,
                 Platform = platformName,
                 Status = status,
-                Completed = chkCompleted.Checked,
-                CompletionDate = chkCompleted.Checked ? dtpCompletionDate.Value.Date : null,
+                Completed = completed,
+                CompletionDate = completed ? dtpCompletionDate.Value.Date : null,
                 Rating = nudRating.Value > 0 ? (double)nudRating.Value : null,
                 HoursPlayed = nudHoursPlayed.Value > 0 ? (int)nudHoursPlayed.Value : null,
                 Remarks = string.IsNullOrWhiteSpace(txtRemarks.Text) ? null : txtRemarks.Text.Trim()
