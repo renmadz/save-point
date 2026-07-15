@@ -37,6 +37,7 @@ namespace save_point
 
             btnCancel.DialogResult = DialogResult.Cancel;
             CancelButton = btnCancel;
+            AcceptButton = btnSave;
 
             cmbStatus.SelectedIndexChanged += CmbStatus_SelectedIndexChanged;
             btnSave.Click += BtnSave_Click;

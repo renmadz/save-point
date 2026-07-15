@@ -40,6 +40,7 @@ namespace save_point
 
             btnCancel.DialogResult = DialogResult.Cancel;
             CancelButton = btnCancel;
+            AcceptButton = btnSave;
 
             changeCoverMenu.Items.Add("From File...", null, CoverFromFile_Click);
             changeCoverMenu.Items.Add("From URL...", null, CoverFromUrl_Click);

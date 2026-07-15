@@ -62,6 +62,53 @@ namespace save_point
             await LoadGamesAsync();
         }
 
+        /// <summary>
+        /// Keyboard shortcuts. Delete is intentionally not handled here:
+        /// it stays on the grid's KeyDown so it never steals the key from
+        /// text editing in the search box.
+        /// </summary>
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Control | Keys.N:
+                    btnAdd.PerformClick();
+                    return true;
+
+                case Keys.Control | Keys.F:
+                    txtSearch.Focus();
+                    txtSearch.SelectAll();
+                    return true;
+
+                case Keys.Control | Keys.Shift | Keys.F:
+                    cmbFilter.Focus();
+                    return true;
+
+                case Keys.Control | Keys.Shift | Keys.S:
+                    cmbSort.Focus();
+                    return true;
+
+                case Keys.F2:
+                    if (dgvGames.CurrentRow?.Tag is Game game)
+                    {
+                        _ = EditGameAsync(game);
+                    }
+                    return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        /// <summary>Opens the edit dialog and reloads the grid on save.</summary>
+        private async Task EditGameAsync(Game game)
+        {
+            using var dialog = new AddEditGameForm(game);
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+            {
+                await LoadGamesAsync();
+            }
+        }
+
         private void ViewOption_Changed(object? sender, EventArgs e)
         {
             ApplyView();
@@ -204,11 +251,7 @@ namespace save_point
                 return;
             }
 
-            using var dialog = new AddEditGameForm(game);
-            if (dialog.ShowDialog(this) == DialogResult.OK)
-            {
-                await LoadGamesAsync();
-            }
+            await EditGameAsync(game);
         }
 
         private async void DgvGames_KeyDown(object? sender, KeyEventArgs e)
