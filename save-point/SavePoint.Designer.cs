@@ -84,48 +84,53 @@
             // 
             // btnAdd
             // 
-            btnAdd.Location = new Point(168, 6);
+            btnAdd.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnAdd.Location = new Point(155, 24);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(72, 62);
+            btnAdd.Size = new Size(107, 31);
             btnAdd.TabIndex = 4;
             btnAdd.Text = "+ Add";
             btnAdd.UseVisualStyleBackColor = true;
             // 
             // cmbFilter
             // 
-            cmbFilter.Font = new Font("Segoe UI", 13F);
+            cmbFilter.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cmbFilter.FormattingEnabled = true;
-            cmbFilter.Location = new Point(281, 16);
+            cmbFilter.Location = new Point(268, 24);
             cmbFilter.Name = "cmbFilter";
-            cmbFilter.Size = new Size(151, 38);
+            cmbFilter.Size = new Size(151, 31);
             cmbFilter.TabIndex = 3;
             cmbFilter.Text = "Filter";
             // 
             // cmbSort
             // 
-            cmbSort.Font = new Font("Segoe UI", 13F);
+            cmbSort.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
             cmbSort.FormattingEnabled = true;
-            cmbSort.Location = new Point(438, 16);
+            cmbSort.Location = new Point(425, 24);
             cmbSort.Name = "cmbSort";
-            cmbSort.Size = new Size(151, 38);
+            cmbSort.Size = new Size(151, 31);
             cmbSort.TabIndex = 2;
             cmbSort.Text = "Sort";
             // 
             // txtSearch
             // 
+            txtSearch.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             txtSearch.BorderStyle = BorderStyle.FixedSingle;
+            txtSearch.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
             txtSearch.Location = new Point(705, 25);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = " Search...";
-            txtSearch.Size = new Size(265, 27);
+            txtSearch.Size = new Size(265, 30);
             txtSearch.TabIndex = 1;
             // 
             // lblSearch
             // 
+            lblSearch.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblSearch.AutoSize = true;
-            lblSearch.Location = new Point(646, 27);
+            lblSearch.Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblSearch.Location = new Point(643, 27);
             lblSearch.Name = "lblSearch";
-            lblSearch.Size = new Size(56, 20);
+            lblSearch.Size = new Size(65, 23);
             lblSearch.TabIndex = 0;
             lblSearch.Text = "Search:";
             // 
@@ -163,7 +168,7 @@
             cover.Name = "cover";
             cover.ReadOnly = true;
             cover.Resizable = DataGridViewTriState.True;
-            cover.Width = 75;
+            cover.Width = 90;
             // 
             // title
             // 
